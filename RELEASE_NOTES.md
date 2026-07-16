@@ -9,7 +9,7 @@ Initial release of Codex Token Widget.
 - Starts in the top-right corner of the primary display.
 - Mac-style close/minimize controls.
 - System tray support with Show, Refresh, and Exit.
-- Token ranges: 24h, 7d, 30d.
+- Token ranges: today, 24h, 7d, 30d, all.
 - Local-only token scanning from `%USERPROFILE%\.codex\sessions`.
 - Embedded app and tray icon.
 

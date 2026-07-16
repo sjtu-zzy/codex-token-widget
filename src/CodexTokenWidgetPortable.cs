@@ -39,7 +39,7 @@ namespace CodexTokenWidgetPortable
 
         public TokenSummary Summarize(int days)
         {
-            DateTime cutoff = DateTime.Now.AddDays(-days);
+            DateTime cutoff = RangeCutoff(days);
             TokenSummary summary = new TokenSummary();
             summary.Updated = DateTime.Now;
             HashSet<string> seen = new HashSet<string>();
@@ -88,6 +88,19 @@ namespace CodexTokenWidgetPortable
             }
 
             return summary;
+        }
+
+        private static DateTime RangeCutoff(int range)
+        {
+            if (range < 0)
+            {
+                return DateTime.MinValue;
+            }
+            if (range == 0)
+            {
+                return DateTime.Today;
+            }
+            return DateTime.Now.AddDays(-range);
         }
 
         private static IEnumerable<string> EnumerateJsonlFiles(string root)
@@ -192,7 +205,7 @@ namespace CodexTokenWidgetPortable
     internal sealed class TokenWidgetForm : Form
     {
         private const int WidgetWidth = 340;
-        private const int WidgetHeight = 238;
+        private const int WidgetHeight = 276;
         private const int Radius = 22;
         private const int MarginPx = 24;
         private readonly Color Back = Color.FromArgb(15, 23, 42);
@@ -208,7 +221,7 @@ namespace CodexTokenWidgetPortable
         private readonly Label inputLabel;
         private readonly Label outputLabel;
         private readonly Label callsLabel;
-        private int selectedDays = 1;
+        private int selectedRange = 0;
         private Point dragOffset;
         private bool refreshing;
 
@@ -290,9 +303,11 @@ namespace CodexTokenWidgetPortable
 
             periodButtons = new Button[]
             {
-                AddPeriod(body, "24h", 1, new Point(18, 147)),
-                AddPeriod(body, "7d", 7, new Point(89, 147)),
-                AddPeriod(body, "30d", 30, new Point(160, 147))
+                AddPeriod(body, "Today", 0, new Point(18, 147)),
+                AddPeriod(body, "24h", 1, new Point(79, 147)),
+                AddPeriod(body, "7d", 7, new Point(140, 147)),
+                AddPeriod(body, "30d", 30, new Point(201, 147)),
+                AddPeriod(body, "All", -1, new Point(262, 147))
             };
 
             Button refresh = new Button();
@@ -302,8 +317,8 @@ namespace CodexTokenWidgetPortable
             refresh.BackColor = Color.FromArgb(15, 118, 110);
             refresh.ForeColor = Color.FromArgb(236, 254, 255);
             refresh.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular);
-            refresh.Location = new Point(239, 146);
-            refresh.Size = new Size(72, 30);
+            refresh.Location = new Point(18, 184);
+            refresh.Size = new Size(294, 30);
             refresh.Click += delegate { RefreshUsage(); };
             body.Controls.Add(refresh);
 
@@ -396,10 +411,10 @@ namespace CodexTokenWidgetPortable
             button.FlatAppearance.BorderSize = 0;
             button.Font = new Font("Segoe UI Semibold", 9f, FontStyle.Regular);
             button.Location = location;
-            button.Size = new Size(62, 30);
+            button.Size = new Size(52, 30);
             button.Click += delegate
             {
-                selectedDays = days;
+                selectedRange = days;
                 UpdatePeriodStyles();
                 RefreshUsage();
             };
@@ -412,7 +427,7 @@ namespace CodexTokenWidgetPortable
             foreach (Button button in periodButtons)
             {
                 int days = (int)button.Tag;
-                button.BackColor = days == selectedDays ? Accent : Color.FromArgb(30, 41, 59);
+                button.BackColor = days == selectedRange ? Accent : Color.FromArgb(30, 41, 59);
                 button.ForeColor = Color.FromArgb(219, 234, 254);
             }
         }
@@ -460,27 +475,35 @@ namespace CodexTokenWidgetPortable
             }
             refreshing = true;
             subLabel.Text = "Refreshing...";
-            int days = selectedDays;
+            int range = selectedRange;
             ThreadPool.QueueUserWorkItem(delegate
             {
-                TokenSummary summary = scanner.Summarize(days);
+                TokenSummary summary = scanner.Summarize(range);
                 BeginInvoke((MethodInvoker)delegate
                 {
-                    Render(summary, days);
+                    Render(summary, range);
                     refreshing = false;
                 });
             });
         }
 
-        private void Render(TokenSummary summary, int days)
+        private void Render(TokenSummary summary, int range)
         {
             totalLabel.Text = FormatNumber(summary.TotalTokens);
             inputLabel.Text = FormatNumber(summary.InputTokens);
             outputLabel.Text = FormatNumber(summary.OutputTokens);
             callsLabel.Text = FormatNumber(summary.Calls);
-            string period = days == 1 ? "24h" : days.ToString(CultureInfo.InvariantCulture) + "d";
+            string period = RangeLabel(range);
             subLabel.Text = period + " | local logs | " + summary.Updated.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
             tray.Text = ("Codex tokens " + period + ": " + FormatNumber(summary.TotalTokens));
+        }
+
+        private static string RangeLabel(int range)
+        {
+            if (range < 0) return "all";
+            if (range == 0) return "today";
+            if (range == 1) return "24h";
+            return range.ToString(CultureInfo.InvariantCulture) + "d";
         }
 
         private static string FormatNumber(long value)

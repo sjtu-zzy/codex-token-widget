@@ -18,7 +18,7 @@ It is designed for users who want a quick desktop-level view of Codex usage with
 - Rounded borderless UI with Mac-style close/minimize dots.
 - Minimize to the system tray.
 - Tray menu with `Show`, `Refresh`, and `Exit`.
-- Time ranges: `24h`, `7d`, and `30d`.
+- Time ranges: `today`, `24h`, `7d`, `30d`, and `all`.
 - Embedded application/tray icon.
 - Reads local Codex `token_count.last_token_usage` records.
 
@@ -40,7 +40,7 @@ dist/CodexTokenWidgetPortable.exe
 
 1. Download `CodexTokenWidgetPortable.exe`.
 2. Double-click it.
-3. Use the `24h`, `7d`, and `30d` buttons to switch the time range.
+3. Use the `today`, `24h`, `7d`, `30d`, and `all` buttons to switch the time range.
 4. Click `Refresh` to refresh immediately.
 5. Click the yellow dot to minimize to tray.
 6. Right-click the tray icon for `Show`, `Refresh`, and `Exit`.
